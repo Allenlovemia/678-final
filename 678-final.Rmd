@@ -19,3 +19,13 @@ library(ggplot2)
 data<-read.csv("walmart.csv")
 ```
 
+```{r}
+predictor<-data%>%
+  select(Weekly_Sales)
+```
+
+```{r}
+## Null model
+
+```
+
