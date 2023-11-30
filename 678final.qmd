@@ -24,7 +24,9 @@ data<-read.csv("walmart.csv")
 null_model <- lm(Weekly_Sales ~ 1, data = data)
 print(null_model)
 summary(null_model)
-
+residuals <- residuals(null_model)
+mse <- mean(residuals^2)
+print(mse)
 ```
 
 ### multilevel model
