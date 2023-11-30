@@ -1,0 +1,34 @@
+---
+title: "678 final"
+author: "Yingmai Chen"
+format: pdf
+editor: visual
+---
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(lme4)
+library(Matrix)
+```
+
+```{r}
+data<-read.csv("walmart.csv")
+```
+
+### Null model
+
+```{r}
+mean_weekly_sales <-mean(data$Weekly_Sales, na.rm = TRUE)
+var_weekly_sales <- var(data$Weekly_Sales, na.rm = TRUE)
+cat("Weekly Sales - Mean:", mean_weekly_sales, "Variance:", var_weekly_sales, "\n")
+```
+
+### multilevel model
+
+```{r}
+model1 <- lmer(Weekly_Sales ~ 1 + (1 | Store), data = data)
+summary(model1)
+```
+
+```{r}
+```
