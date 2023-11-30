@@ -9,7 +9,10 @@ library(tidyverse)
 library(ggplot2)
 library(lme4)
 library(Matrix)
+library(lmerTest)
+library(MuMIn)
 ```
+
 
 ```{r}
 data<-read.csv("walmart.csv")
@@ -18,9 +21,10 @@ data<-read.csv("walmart.csv")
 ### Null model
 
 ```{r}
-mean_weekly_sales <-mean(data$Weekly_Sales, na.rm = TRUE)
-var_weekly_sales <- var(data$Weekly_Sales, na.rm = TRUE)
-cat("Weekly Sales - Mean:", mean_weekly_sales, "Variance:", var_weekly_sales, "\n")
+null_model <- lm(Weekly_Sales ~ 1, data = data)
+print(null_model)
+summary(null_model)
+
 ```
 
 ### multilevel model
@@ -31,4 +35,6 @@ summary(model1)
 ```
 
 ```{r}
+plot(residuals(model1))
+hist(residuals(model1))
 ```
