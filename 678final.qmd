@@ -1,26 +1,65 @@
 ---
 title: "678 final"
 author: "Yingmai Chen"
-format: pdf
-editor: visual
+format:
+  pdf:
+    keep-tex: true
+    latex-engine: xelatex
+header-includes:
+  - "\\usepackage{fontspec}"
+  - "\\setmainfont{Times New Roman}"
+  - "\\usepackage{setspace}"
+  - "\\setstretch{1.25}"
 ---
-```{r}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(ggplot2)
 library(lme4)
 library(Matrix)
 library(lmerTest)
 library(MuMIn)
+library(lubridate)
+library(caret)
+library(broom)
+library(corrplot)
 ```
 
 
-```{r}
+```{r echo=FALSE}
 data<-read.csv("walmart.csv")
 ```
 
-### Null model
+```{r echo=FALSE}
+data$Date <- as.Date(data$Date, format="%m-%d-%Y")
+data$Holiday_Flag <- as.factor(data$Holiday_Flag)
+```
+# I.abstract
 
-```{r}
+# II.introduction
+
+# III.method
+
+## EDA
+```{r echo=FALSE}
+ggplot(data, aes(x =Weekly_Sales)) + 
+  geom_histogram(binwidth = 100000, fill = "lightblue", color = "black") +
+  labs(title = "Distribution of Weekly Sales", x = " Weekly Sales", y = "Frequency of weekly sales")
+
+```
+    From this plot,we can see that there are fewer weeks with very high sales 
+    compared to weeks with low sales.This is typical for sales data where a 
+    small number of periods (like holiday seasons) might have exceptionally 
+    high sales.
+
+
+```{r echo=FALSE}
+correlations <- cor(data %>% select(-Store, -Date, -Holiday_Flag)) 
+corrplot(correlations, method = "circle")
+```
+
+## Null model
+
+```{r echo=FALSE,results='hide'}
 null_model <- lm(Weekly_Sales ~ 1, data = data)
 print(null_model)
 summary(null_model)
@@ -29,14 +68,52 @@ mse <- mean(residuals^2)
 print(mse)
 ```
 
-### multilevel model
+## complete pooling model
 
-```{r}
-model1 <- lmer(Weekly_Sales ~ 1 + (1 | Store), data = data)
-summary(model1)
+```{r echo=FALSE,results='hide'}
+predictors <- c('Store', 'Holiday_Flag', 'Temperature', 'Fuel_Price', 'CPI', 'Unemployment')
+target <- 'Weekly_Sales'
+
+set.seed(42) 
+trainIndex <- createDataPartition(data[[target]], p = .8, 
+                                  list = FALSE, 
+                                  times = 1)
+data_train <- data[trainIndex,]
+data_test <- data[-trainIndex,]
+
+model <- lm(log(Weekly_Sales) ~ Store + Holiday_Flag + Temperature + Fuel_Price + CPI + Unemployment, data=data_train)
+summary(model)
+
+predictions <- predict(model, data_test)
+
 ```
 
-```{r}
-plot(residuals(model1))
-hist(residuals(model1))
+
+## No pooling model
+
+```{r echo=FALSE,results='hide'}
+models <- data %>%
+  group_by(Store) %>%
+  do(model = lm(log(Weekly_Sales) ~ Temperature + Fuel_Price + CPI + Unemployment, data = .))
+model_summaries <- models %>% 
+  rowwise() %>% 
+  do(tidy(.$model))
+print(model_summaries)
 ```
+## generalized linear Model
+```{r echo=FALSE,results='hide'}
+model <- glm(log(Weekly_Sales) ~ Store + Holiday_Flag + Temperature + Fuel_Price + CPI + Unemployment, 
+             data = data, 
+             family = gaussian())
+summary(model)
+```
+
+# IV.result
+
+# V.discussion
+
+# VI.appendix
+
+
+
+
