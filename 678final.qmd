@@ -61,7 +61,7 @@ ggplot(data, aes(x =Weekly_Sales)) +
  compared to weeks with low sales.This is typical for sales data where a
  small number of periods (like holiday seasons) might have exceptionally high sales.
 
-```{r echo=FALSE}
+```{r fig.width=10, fig.height=8, echo=FALSE}
 grouped_data <- data %>%
   group_by(Store) %>%
   summarise(median_sales = median(Weekly_Sales, na.rm = TRUE),
@@ -122,7 +122,33 @@ ggplot(date_grouped_data, aes(x = Date, y = median_sales)) +
 
 From this plot,we can see that there is a recurring trend of lower sales at the beginning of each year. This dip in sales could be attributed to post-holiday season effects, where consumer spending typically drops following the end-of-year holidays,which means the date would have impact on weekly sales.
 
+```{r echo=FALSE,message=FALSE}
+data1 <- data[, !names(data) %in% c("Store","Date")]
+data1 <- data1 %>%
+  mutate_if(is.factor, as.character) %>% 
+  mutate_if(is.character, function(x) as.numeric(as.character(x))) 
+cor_matrix <- cor(data1, use = "complete.obs")
+library(reshape2) 
+
+melted_cor_matrix <- melt(cor_matrix)
+
+ggplot(melted_cor_matrix, aes(Var1, Var2, fill = value)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal() + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1),
+        axis.text.y = element_text(size = 12)) +
+  coord_fixed()
+```
+
+As we can see, from this plot,It is not obvious that these variables are correlated to weekly sales.
+
 ## model
+
+Because we can not easily draw a conclusion by doing EDA,so the next step for us shoud be modeling,
 
 ### Null model
 
