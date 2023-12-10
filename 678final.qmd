@@ -344,7 +344,7 @@ $u_j$ means andom effects term, capturing the effects introduced by different st
 
 $\epsilon_i$ means error term.
 
-```{r warning=FALSE,echo=FALSE,message=FALSE}
+```{r warning=FALSE,echo=FALSE,message=FALSE,results='hide'}
 model <- glmer(Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag + (1 | Store), 
                data = data, family = gaussian(link = "log"))
 summary(model)
@@ -373,7 +373,7 @@ $\log(\text{Weekly_Sales}) = \alpha_{i} + \beta_{1[i]}\text{Temperature} + \beta
 
 in this model,for $\epsilon_i$,it means error term,$\beta_{1[i]}$ to$\beta_{5[i]}$ means random coefficient of variables based on each store and $\alpha_{i}$ means random intercept.
 
-```{r echo=FALSE,warning=FALSE,message=FALSE}
+```{r echo=FALSE,warning=FALSE,message=FALSE,results='hide'}
 model <- lmer(Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag + (Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag | Store), data = data)
 
 summary(model)
