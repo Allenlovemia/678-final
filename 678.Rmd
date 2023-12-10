@@ -1,0 +1,119 @@
+---
+title: "Untitled"
+author: "Yingmai Chen"
+date: "2023-12-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+
+```{r}
+
+
+# 加载必要的库
+library(dplyr)
+library(lubridate)
+
+# 读取数据
+melbourne_data <- read.csv('Melbourne_housing_FULL.csv')
+
+# 删除 'Price', 'Distance', 'Rooms', 'BuildingArea', 'YearBuilt', 'Landsize' 中含有缺失值的行
+cleaned_data <- melbourne_data %>% 
+  filter(!is.na(Price) & !is.na(Distance) & !is.na(Rooms) & !is.na(BuildingArea) & !is.na(YearBuilt) & !is.na(Landsize))
+
+# 转换数据类型
+cleaned_data$Date <- dmy(cleaned_data$Date)  # 将 Date 转换为日期类型
+cleaned_data$Postcode <- as.character(cleaned_data$Postcode)  # 将 Postcode 转换为字符类型
+
+# 筛选样本数大于 50 的郊区
+suburb_counts <- table(cleaned_data$Suburb)
+suburbs_over_50 <- names(suburb_counts[suburb_counts > 50])
+filtered_data <- cleaned_data %>% filter(Suburb %in% suburbs_over_50)
+# 如果 Distance 不是数值型，转换它
+filtered_data$Distance <- as.numeric(as.character(filtered_data$Distance))
+
+
+```
+
+
+```{r}
+# 构建空模型
+null_model <- glm(Price ~ 1, data = filtered_data, family = gaussian())
+summary(null_model)
+
+
+
+```
+
+
+
+```{r}
+# 加载 lm 函数所在的库
+library(stats)
+
+# 构建完全汇聚模型
+complete_pooling_model <- lm(log(Price) ~ Distance + Rooms + BuildingArea + YearBuilt + Landsize, data = filtered_data)
+summary(complete_pooling_model)
+
+
+
+
+```
+
+
+
+
+
+
+```{r}
+# 构建 GLM 模型
+glm_model <- glm(log(Price) ~ Distance + Rooms + BuildingArea + YearBuilt + Landsize, data = filtered_data, family = gaussian())
+summary(glm_model)
+
+
+```
+
+
+
+
+```{r}
+# 针对每个郊区单独构建模型
+no_pooling_models <- lapply(unique(filtered_data$Suburb), function(suburb) {
+  suburb_data <- filtered_data[filtered_data$Suburb == suburb, ]
+  lm(Price ~ Distance + Rooms + BuildingArea + YearBuilt + Landsize, data = suburb_data)
+})
+
+# 遍历每个郊区并打印模型摘要
+for(suburb in unique(filtered_data$Suburb)) {
+  suburb_data <- filtered_data[filtered_data$Suburb == suburb, ]
+  model <- lm(Price ~ Distance + Rooms + BuildingArea + YearBuilt + Landsize, data = suburb_data)
+  
+  # 打印郊区名称和模型摘要
+  cat("\n\nSuburb:", suburb, "\n")
+  print(summary(model)$r.squared)  # 打印 R-squared 值
+  print(summary(model)$coefficients)  # 打印系数估计值
+}
+
+
+
+
+```
+
+
+
+
+
+```{r}
+# 构建 partial pooling 模型
+partial_pooling_model <- lmer(Price ~ Distance + Rooms + BuildingArea + YearBuilt + Landsize + (1 | Suburb), data = filtered_data)
+
+# 打印模型摘要
+summary(partial_pooling_model)
+
+
+```
