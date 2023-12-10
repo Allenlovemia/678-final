@@ -159,20 +159,24 @@
 
 \begin{document}
 \maketitle
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[frame hidden, breakable, enhanced, borderline west={3pt}{0pt}{shadecolor}, boxrule=0pt, interior hidden, sharp corners]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[sharp corners, breakable, borderline west={3pt}{0pt}{shadecolor}, boxrule=0pt, enhanced, interior hidden, frame hidden]}{\end{tcolorbox}}\fi
 
 \hypertarget{i.abstract}{%
 \section{I.Abstract}\label{i.abstract}}
 
 The project aims to find the relationship between weekly sales of
-walmart with other variables,and also want to find which variable is
-more correlated with weekly sales,and the project will include six
+walmart with other variables,and the project will include six
 parts:``Abstract'',``Introduction'',``method'',``results'',``discussion'',``appendix''.
 The first two parts are the descriptions of this project,and the method
-part would have two parts:EDA(Exploratory Data Analysis),and model.The
-results would be the comparison and illustration of the model.Discussion
-part would discuss some future questions about my project,appendix would
-include some poorly visualized graphs.
+part would have two parts:EDA(Exploratory Data Analysis)which include
+some visualization of my data and description of it,and for the model
+part,it will include the formula of my model and some analysis of the
+model,I plan to make six model.The results would be the comparison of
+the model,like among these six model,which one I think is
+best.Discussion part would discuss what should be improved about the
+final model I choose,and some future questions about my project,appendix
+would include some poorly visualized graphs when I do eda,so I don't
+want to put it in eda part.
 
 \hypertarget{ii.introduction}{%
 \section{II.Introduction}\label{ii.introduction}}
@@ -246,49 +250,401 @@ As we can see, from this plot,It is not obvious that these variables are
 correlated to weekly sales.
 
 \hypertarget{model}{%
-\subsection{model}\label{model}}
+\subsection{Model}\label{model}}
 
 Because we can not easily draw a conclusion by doing EDA,so the next
 step for us shoud be modeling,
 
-\hypertarget{null-model}{%
-\subsubsection{Null model}\label{null-model}}
+\hypertarget{model1null-model}{%
+\subsubsection{model1:null model}\label{model1null-model}}
 
-\hypertarget{complete-pooling-model}{%
-\subsubsection{complete pooling model}\label{complete-pooling-model}}
+\(Weeklysales = \beta_0 + \varepsilon_i\)
 
-\hypertarget{no-pooling-model}{%
-\subsubsection{No pooling model}\label{no-pooling-model}}
+\(\beta_0\) is the intercept, which is the average sales over all
+observations in the data.
 
-\hypertarget{generalized-linear-model}{%
-\subsubsection{generalized linear
-Model}\label{generalized-linear-model}}
+\(\varepsilon_i\) is the error term for the i-th observation.
+
+\hypertarget{analysis-of-model1}{%
+\paragraph{analysis of model1}\label{analysis-of-model1}}
+
+Intercept: The estimated intercept is 1,046,965 with a standard error of
+7,035. This intercept represents the average weekly sales across all
+stores and dates included in the dataset.
+
+Residuals: The residuals' range from -836,979 to 277,1722, with the
+interquartile range (IQR) from -493,615 (1st quartile) to 37,194 (3rd
+quartile). The large range of residuals indicates there is considerable
+variability in weekly sales that the null model (using only the mean)
+does not capture. The median of the residuals is -86,219, suggesting
+that the model may systematically overestimate the weekly sales.
+
+Mean Squared Error (MSE):The provided image shows the Mean Squared Error
+(MSE) of the null model, which is 318460187634.It illustrated that The
+null model's high MSE indicates it fails to accurately predict weekly
+sales, lacking explanatory variables. To improve, incorporating factors
+like promotions, store attributes, and seasonality into a more complex
+model is essential.
+
+\hypertarget{model2simple-linear-modelcomplete-pooling-model}{%
+\subsubsection{model2:simple linear model(complete pooling
+model)}\label{model2simple-linear-modelcomplete-pooling-model}}
+
+\(\log(\text{Weekly_Sales}) = \beta_0 + \beta_1 \text{Holiday_Flag} + \beta_2 \text{Temperature} + \beta_3 \text{Fuel_Price} + \beta_4 \text{CPI} + \beta_5 \text{Unemployment} + \epsilon\)
+
+\hypertarget{analysis-of-model2}{%
+\paragraph{analysis of model2}\label{analysis-of-model2}}
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-6-1.pdf}
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-6-2.pdf}
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-6-3.pdf}
+
+The model has a very low R-squared value, indicating it does not explain
+much of the variation in the data.Some predictors are statistically
+significant, but given the low R-squared, their practical impact might
+be limited. The assumptions of normality and homoscedasticity may be
+violated based on the Q-Q plot and the Residuals vs.~Predictions plot,
+which can affect the reliability of the model's standard errors and
+p-values.There are outliers or extreme values that might be influencing
+the results significantly.So all in all,simple linear model seems not to
+be a good model to fit the data.
+
+\hypertarget{model3multilevel-linear-model-with-random-intercept-no-pooling-model}{%
+\subsubsection{model3:multilevel linear model with random intercept (No
+pooling
+model)}\label{model3multilevel-linear-model-with-random-intercept-no-pooling-model}}
+
+\(\log(\text{Weekly_Sales}) = \beta_0 + \beta_1 \text{Temperature} + \beta_2 \text{Fuel_Price} + \beta_3 \text{CPI} + \beta_4 \text{Unemployment} + \beta_5 \text{Holiday_Flag} + u_j + \epsilon_i\)
+
+\(\beta_0\) means the intercept term, representing the expected value of
+the log sales when all other explanatory variables are zero.
+
+\(u_j\) means andom effects term, capturing the effects introduced by
+different stores (store j). This means each store has its own specific
+impact (like location, size, customer base, etc.) that is not shared
+with other stores.
+
+\(\epsilon_i\) means error term.
+
+So in this model,I will use the random value of intercept of store to
+distinguish the different store.
+
+\hypertarget{analysis-of-model3}{%
+\paragraph{analysis of model3}\label{analysis-of-model3}}
+
+\begin{verbatim}
+Warning: 'r.squaredGLMM' now calculates a revised statistic. See the help page.
+\end{verbatim}
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-9-1.pdf}
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-9-2.pdf}
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-9-3.pdf}
+
+Model Fit:
+
+The conditional R-squared is extremely high, suggesting that when
+accounting for both fixed and random effects, the model explains a large
+proportion of the variance in sales.
+
+The marginal R-squared is quite low, indicating that without the random
+effects, the fixed effects do not explain much of the variance in sales.
+
+Residual Diagnostics:
+
+The residual plot does not show obvious patterns, which suggests that
+the model does not suffer from non-linearity or heteroscedasticity
+issues.
+
+The QQ plot indicates deviations from normality, particularly in the
+tails. This could point to issues with outlier responses or indicate
+that the normal distribution may not be the best fit for the residuals.
+
+In conclusion, while appears to be a good fit for capturing
+store-to-store variation in sales, the fixed effects alone have limited
+explanatory power.
+
+\hypertarget{model4generalized-linear-modelcomplete-pooling}{%
+\subsubsection{model4:generalized linear Model(complete
+pooling)}\label{model4generalized-linear-modelcomplete-pooling}}
+
+\(\log(\text{Weekly_Sales}) = \beta_0 + \beta_1 \text{Holiday_Flag} + \beta_2 \text{Temperature} + \beta_3 \text{Fuel_Price} + \beta_4 \text{CPI} + \beta_5 \text{Unemployment}\)
+
+\hypertarget{analysis-of-model4}{%
+\paragraph{analysis of model4}\label{analysis-of-model4}}
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-11-1.pdf}
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-12-1.pdf}
+
+After doing many analysis of this data,we find that it also shows a poor
+fit with the data,Neither residual plot nor qq plot all shows it would
+not fit to the data,so I decide not to do the no pooling anymore,I want
+to try to improve model3 to make it fit better to the data.
+
+\hypertarget{model5multilevel-generalized-linear-model-with-random-intercept-no-pooling}{%
+\subsubsection{model5:multilevel generalized linear Model with random
+intercept (No
+pooling)}\label{model5multilevel-generalized-linear-model-with-random-intercept-no-pooling}}
+
+\(\log(\text{Weekly_Sales}) = \beta_0 + \beta_1 \text{Temperature} + \beta_2 \text{Fuel_Price} + \beta_3 \text{CPI} + \beta_4 \text{Unemployment} + \beta_5 \text{Holiday_Flag} + u_j + \epsilon_i\)
+
+\(\beta_0\) means the intercept term, representing the expected value of
+the log sales when all other explanatory variables are zero.
+
+\(u_j\) means andom effects term, capturing the effects introduced by
+different stores (store j). This means each store has its own specific
+impact (like location, size, customer base, etc.) that is not shared
+with other stores.
+
+\(\epsilon_i\) means error term.
+
+\begin{verbatim}
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: gaussian  ( log )
+Formula: Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment +  
+    Holiday_Flag + (1 | Store)
+   Data: data
+
+     AIC      BIC   logLik deviance df.resid 
+ -8757.1  -8703.0   4386.6  -8773.1     6427 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-5.0210 -0.4973 -0.0771  0.3510  5.9826 
+
+Random effects:
+ Groups   Name        Variance  Std.Dev.
+ Store    (Intercept) 7.277e-05 0.008531
+ Residual             1.751e-02 0.132334
+Number of obs: 6435, groups:  Store, 45
+
+Fixed effects:
+                Estimate Std. Error t value Pr(>|z|)    
+(Intercept)    2.612e+00  1.228e-02 212.713  < 2e-16 ***
+Temperature   -2.297e-05  7.243e-06  -3.170  0.00152 ** 
+Fuel_Price    -2.004e-03  3.855e-04  -5.199 2.00e-07 ***
+CPI            1.338e-04  5.436e-05   2.462  0.01381 *  
+Unemployment  -1.431e-03  2.325e-04  -6.155 7.51e-10 ***
+Holiday_Flag1  4.145e-03  4.348e-04   9.534  < 2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+            (Intr) Tmprtr Fl_Prc CPI    Unmply
+Temperature -0.030                            
+Fuel_Price   0.331 -0.120                     
+CPI         -0.759  0.007 -0.600              
+Unemploymnt -0.486  0.014  0.152  0.419       
+Holidy_Flg1  0.022  0.166  0.071 -0.050 -0.004
+optimizer (Nelder_Mead) convergence code: 0 (OK)
+Model failed to converge with max|grad| = 0.00879395 (tol = 0.002, component 1)
+Model is nearly unidentifiable: very large eigenvalue
+ - Rescale variables?
+Model is nearly unidentifiable: large eigenvalue ratio
+ - Rescale variables?
+\end{verbatim}
+
+\hypertarget{analysis-of-model5}{%
+\paragraph{analysis of model5}\label{analysis-of-model5}}
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-14-1.pdf}
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-14-2.pdf}
+
+From the qqplot ,we can see a deviation from the line in the tails,
+suggesting that the residuals may not be normally distributed,
+especially in the extremes. This could affect the validity of
+statistical tests and confidence intervals.From the residual plot,we can
+see a clear pattern of residuals, which is not ideal. We would prefer a
+random scatter. The banding pattern could be due to discrete features in
+the data or overdispersion.So it seems this model may not be a good
+choice.
+
+\hypertarget{model6multilevel-linear-model-with-random-coefficient-and-random-intercept-no-pooling}{%
+\subsubsection{model6:multilevel linear Model with random coefficient
+and random intercept (No
+pooling)}\label{model6multilevel-linear-model-with-random-coefficient-and-random-intercept-no-pooling}}
+
+\(\log(\text{Weekly_Sales}) = \alpha_{i} + \beta_{1[i]}\text{Temperature} + \beta_{2[i]}\text{Fuel_Price} + \beta_{3[i]}\text{CPI} + \beta_{4[i]}\text{Unemployment} + \beta_{5[i]}\text{Holiday_flag}+\epsilon_i\)
+
+in this model,for \(\epsilon_i\),it means error term,\(\beta_{1[i]}\)
+to\(\beta_{5[i]}\) means random coefficient of variables based on each
+store and \(\alpha_{i}\) means random intercept.
+
+\begin{verbatim}
+Linear mixed model fit by REML. t-tests use Satterthwaite's method [
+lmerModLmerTest]
+Formula: Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment +  
+    Holiday_Flag + (Temperature + Fuel_Price + CPI + Unemployment +  
+    Holiday_Flag | Store)
+   Data: data
+
+REML criterion at convergence: -9359
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-5.9647 -0.4990 -0.0782  0.3515  7.1722 
+
+Random effects:
+ Groups   Name          Variance  Std.Dev. Corr                         
+ Store    (Intercept)   7.089e+00 2.66246                               
+          Temperature   1.877e-06 0.00137  -0.11                        
+          Fuel_Price    6.000e-04 0.02449   0.27 -0.51                  
+          CPI           1.448e-04 0.01203  -0.94  0.04 -0.09            
+          Unemployment  3.867e-03 0.06219  -0.61  0.23 -0.86  0.37      
+          Holiday_Flag1 6.846e-04 0.02617  -0.51  0.40 -0.91  0.44  0.84
+ Residual               1.227e-02 0.11077                               
+Number of obs: 6435, groups:  Store, 45
+
+Fixed effects:
+                Estimate Std. Error         df t value Pr(>|t|)    
+(Intercept)   12.2859435  0.4554472 46.4796152  26.976  < 2e-16 ***
+Temperature   -0.0003703  0.0002249 43.7016713  -1.646  0.10686    
+Fuel_Price    -0.0312119  0.0067373 71.2693041  -4.633 1.58e-05 ***
+CPI            0.0074790  0.0021379 52.7165206   3.498  0.00096 ***
+Unemployment   0.0261803  0.0110607 35.4109075   2.367  0.02353 *  
+Holiday_Flag1  0.0538734  0.0067703 70.8235490   7.957 2.04e-11 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+            (Intr) Tmprtr Fl_Prc CPI    Unmply
+Temperature -0.108                            
+Fuel_Price   0.328 -0.302                     
+CPI         -0.944  0.046 -0.318              
+Unemploymnt -0.662  0.180 -0.443  0.460       
+Holidy_Flg1 -0.234  0.264 -0.223  0.179  0.387
+optimizer (nloptwrap) convergence code: 0 (OK)
+boundary (singular) fit: see help('isSingular')
+\end{verbatim}
+
+\hypertarget{analysis-of-model6}{%
+\paragraph{analysis of model6}\label{analysis-of-model6}}
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-16-1.pdf}
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-16-2.pdf}
+
+From this qqplot,we can see some deviation from normality, especially in
+the tails. This could affect the reliability of the p-values associated
+with the fixed effects.From the residual plot, we can see it shows a
+fairly random dispersion,besides,we also see the summary of the model,it
+shows that the intercept and all predictors except for Temperature have
+significant p-values, suggesting they contribute meaningfully to the
+model.so based on these outputs, the model appears to be decent.
 
 \hypertarget{iv.result}{%
 \section{IV.result}\label{iv.result}}
 
+I have mentioned in the abstract part,for the result part,what I want to
+do is to choose from the six model I used to judge which one is the best
+model,so among these six model,the first three should be exclude are the
+null model,generalized linear Model,and the simple linear model,because
+in the analysis part,we can see they all unsatisfactory,so for the last
+part,what I will do is to make a competition between multilevel linear
+Model with random coefficient and random intercept, multilevel linear
+Model with random intercept,multilevel generalized linear Model with
+random intercept.
+
+\hypertarget{comparison}{%
+\subsection{comparison}\label{comparison}}
+
+\begin{verbatim}
+Data: data
+Models:
+model3: Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag + (1 | Store)
+model5: Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag + (1 | Store)
+model6: Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag + (Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag | Store)
+       npar     AIC     BIC logLik deviance  Chisq Df Pr(>Chisq)    
+model3    8 -8590.2 -8536.0 4303.1  -8606.2                         
+model5    8 -8757.1 -8703.0 4386.6  -8773.1 166.94  0               
+model6   28 -9356.1 -9166.6 4706.1  -9412.1 639.01 20  < 2.2e-16 ***
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+\end{verbatim}
+
+model3 is multilevel linear Model with random intercept,model5 is
+multilevel generalized linear Model with random intercept,model6 is
+multilevel linear Model with random coefficient and random intercept.
+
+AIC and BIC: model16 has the lowest AIC and BIC values, suggesting that
+it fits the data best while considering model complexity. AIC and BIC
+are fit indices that penalize for complexity, with lower values
+typically indicating a model that fits well with fewer parameters.
+
+Log-Likelihood: model16 has the highest log-likelihood value, which
+indicates the most accurate fit to the data.
+
+Significance Testing: The p-value for the Chisq statistic is well below
+0.001, indicating that model16 represents a statistically significant
+improvement over the other models.
+
+Combining these insights, model16 appears to be the relatively best
+model among the three. It not only provides the best fit to the data
+(based on AIC, BIC, and log-likelihood) but also accounts for model
+complexity in a penalized manner. Although this model is more complex
+(as it includes random slopes), its ability to improve the fit seems to
+outweigh the costs of increased complexity. Therefore, if the data
+supports a more complex model structure and predictive ability is an
+important consideration, model16 would be the better choice.
+
 \hypertarget{v.discussion}{%
 \section{V.discussion}\label{v.discussion}}
+
+For the discussion part,I have mentioned in the abstract part,I will
+point out some limitation of multilevel linear Model with random
+coefficient and random intercept(model I choose) and future questions.
+
+\hypertarget{limitation}{%
+\subsection{limitation}\label{limitation}}
+
+For the predictor Significance temperature is insignificance (p
+\textgreater{} 0.05),which suggests it may not be an important predictor
+for \texttt{Log\_Weekly\_Sales} within this model, potentially limiting
+the model's explanatory power regarding the influence of temperature on
+sales. For the qqplot part, deviations from normality, particularly in
+the tails as shown by the Q-Q plot, question the reliability of the
+model's p-values and confidence intervals, impacting the validity of
+statistical inferences.Foe r the residual plot,the funnel pattern
+observed in the residuals versus fitted values plot indicates the
+presence of heteroscedasticity, which means that the error variance is
+not constant. This can affect the efficiency of the estimators and the
+predictive performance of the model.
+
+\hypertarget{future-questions}{%
+\subsection{future questions}\label{future-questions}}
+
+For the future question,I think first we should further investigate the
+Temperature variable to see if there is a nonlinear relationship or
+interactions with other variables that are not captured in the current
+model. And we should try to explore more complex random effects
+structures to better capture the variability in the data, such as
+including random slopes for certain predictors.
 
 \hypertarget{vi.appendix}{%
 \section{VI.appendix}\label{vi.appendix}}
 
-\includegraphics{678final_files/figure-pdf/unnamed-chunk-8-1.pdf}
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-18-1.pdf}
 
 From this plot, we can hardly see if there exist relationships between
 CPI and weekly sales.
 
-\includegraphics{678final_files/figure-pdf/unnamed-chunk-9-1.pdf}
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-19-1.pdf}
 
 From this plot,we can see temperatures from 25 to 75 of the country tend
 to have much more numbers of higher weekly sales.
 
-\includegraphics{678final_files/figure-pdf/unnamed-chunk-10-1.pdf}
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-20-1.pdf}
 
 From this plot, we can hardly see if there exist relationships between
 fuel price and weekly sales.
 
-\includegraphics{678final_files/figure-pdf/unnamed-chunk-11-1.pdf}
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-21-1.pdf}
 
 From this plot,we can see the less of proportions of unemployment tends
 to have higher weekly sales.

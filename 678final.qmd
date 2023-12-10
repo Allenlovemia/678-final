@@ -23,6 +23,8 @@ library(lubridate)
 library(caret)
 library(broom)
 library(corrplot)
+library(lme4)
+library(lmerTest)
 ```
 
 
@@ -32,10 +34,12 @@ data<-read.csv("walmart.csv")
 
 
 # I.Abstract
- The project aims to find the relationship between weekly sales of walmart with other variables,and also want to find which variable is more correlated with weekly sales,and the project will include six parts:"Abstract","Introduction","method","results","discussion","appendix".
- The first two parts are the descriptions of this project,and the method part would have two parts:EDA(Exploratory Data Analysis),and model.The results would be the comparison and illustration of the model.Discussion part would discuss some future questions about my project,appendix would include some poorly visualized graphs. 
+
+ The project aims to find the relationship between weekly sales of walmart with other variables,and the project will include six parts:"Abstract","Introduction","method","results","discussion","appendix".
+ The first two parts are the descriptions of this project,and the method part would have two parts:EDA(Exploratory Data Analysis)which include some visualization of my data and description of it,and for the model part,it will include the formula of my model and some analysis of the model,I plan to make six model.The results would be the comparison of the model,like among these six model,which one I think is best.Discussion part would discuss what should be improved about the final model I choose,and some future questions about my project,appendix would include some poorly visualized graphs when I do eda,so I don't want to put it in eda part. 
  
 # II.Introduction
+
 In this study, we leveraged a dataset from Kaggle to identify and quantify various factors impacting weekly sales. The dataset includes key variables  such as holidays, oil prices, temperature, unemployment rates, and the Consumer Price Index (CPI), we utilized regression analysis to assess the relative impact of these variables on sales volumes.Through this study, we hope to offer a more comprehensive and accurate sales forecasting model, helping businesses better understand market dynamics and make more effective business decisions.
 
 # III.Method
@@ -154,6 +158,12 @@ Because we can not easily draw a conclusion by doing EDA,so the next step for us
 
 ### model1:null model
 
+$Weeklysales = \beta_0 + \varepsilon_i$
+
+$\beta_0$ is the intercept, which is the average sales over all observations in the data.
+
+$\varepsilon_i$ is the error term for the i-th observation.
+
 ```{r echo=FALSE,results='hide'}
 null_model <- lm(Weekly_Sales ~ 1, data = data)
 print(null_model)
@@ -162,11 +172,20 @@ residuals <- residuals(null_model)
 mse <- mean(residuals^2)
 print(mse)
 ```
+#### analysis of model1
+
+Intercept: The estimated intercept is 1,046,965 with a standard error of 7,035. This intercept represents the average weekly sales across all stores and dates included in the dataset.
+
+Residuals: The residuals' range from -836,979 to 277,1722, with the interquartile range (IQR) from -493,615 (1st quartile) to 37,194 (3rd quartile). The large range of residuals indicates there is considerable variability in weekly sales that the null model (using only the mean) does not capture. The median of the residuals is -86,219, suggesting that the model may systematically overestimate the weekly sales.
+
+Mean Squared Error (MSE):The provided image shows the Mean Squared Error (MSE) of the null model, which is 318460187634.It illustrated that The null model's high MSE indicates it fails to accurately predict weekly sales, lacking explanatory variables. To improve, incorporating factors like promotions, store attributes, and seasonality into a more complex model is essential.
+
 
 ### model2:simple linear model(complete pooling model)
 
+$\log(\text{Weekly_Sales}) = \beta_0 + \beta_1 \text{Holiday_Flag} + \beta_2 \text{Temperature} + \beta_3 \text{Fuel_Price} + \beta_4 \text{CPI} + \beta_5 \text{Unemployment} + \epsilon$
 ```{r echo=FALSE,results='hide'}
-predictors <- c('Store', 'Holiday_Flag', 'Temperature', 'Fuel_Price', 'CPI', 'Unemployment')
+predictors <- c( 'Holiday_Flag', 'Temperature', 'Fuel_Price', 'CPI', 'Unemployment')
 target <- 'Weekly_Sales'
 
 set.seed(42) 
@@ -176,36 +195,248 @@ trainIndex <- createDataPartition(data[[target]], p = .8,
 data_train <- data[trainIndex,]
 data_test <- data[-trainIndex,]
 
-model <- lm(log(Weekly_Sales) ~ Store + Holiday_Flag + Temperature + Fuel_Price + CPI + Unemployment, data=data_train)
+model <- lm(log(Weekly_Sales) ~  Holiday_Flag + Temperature + Fuel_Price + CPI + Unemployment, data=data_train)
 summary(model)
 
 predictions <- predict(model, data_test)
 
 ```
+#### analysis of model2
+
+```{r echo=FALSE}
+qqnorm(residuals(model))
+qqline(residuals(model))
+test_residuals <- log(data_test$Weekly_Sales) - predictions
+plot(predictions, test_residuals) 
+abline(h = 0, col = "red")
 
 
-### model3:multilevel model(No pooling model)
+coef_summary <- summary(model)$coefficients
 
-```{r echo=FALSE,results='hide'}
-models <- data %>%
-  group_by(Store) %>%
-  do(model = lm(log(Weekly_Sales) ~ Temperature + Fuel_Price + CPI + Unemployment, data = .))
-model_summaries <- models %>% 
-  rowwise() %>% 
-  do(tidy(.$model))
-print(model_summaries)
+
+coef_df <- data.frame(
+  Term = rownames(coef_summary),
+  Estimate = coef_summary[, "Estimate"],
+  StdError = coef_summary[, "Std. Error"]  
+)
+coef_df_no_intercept <- coef_df[coef_df$Term != "(Intercept)", ]
+ggplot(coef_df_no_intercept, aes(x = Term, y = Estimate)) +
+  geom_errorbar(aes(ymin = Estimate - StdError, ymax = Estimate + StdError), width = 0.2, color = "black") +
+  geom_point(color = "blue", size = 3) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1), # Adjust text alignment
+    axis.title = element_text(size = 12),
+    plot.title = element_text(size = 14, face = "bold", hjust = 0.5)
+  ) +
+  labs(x = 'Predictors', y = 'Coefficients', title = 'Coefficient Plot for Model')
 ```
-### model4:generalized linear Model
+
+The model has a very low R-squared value, indicating it does not explain much of the variation in the data.Some predictors are statistically significant, but given the low R-squared, their practical impact might be limited.
+The assumptions of normality and homoscedasticity may be violated based on the Q-Q plot and the Residuals vs. Predictions plot, which can affect the reliability of the model's standard errors and p-values.There are outliers or extreme values that might be influencing the results significantly.So all in all,simple linear model seems not to be a good model to fit the data.
+
+### model3:multilevel linear model with random intercept (No pooling model)
+
+$\log(\text{Weekly_Sales}) = \beta_0 + \beta_1 \text{Temperature} + \beta_2 \text{Fuel_Price} + \beta_3 \text{CPI} + \beta_4 \text{Unemployment} + \beta_5 \text{Holiday_Flag} + u_j + \epsilon_i$
+
+$\beta_0$ means the intercept term, representing the expected value of the log sales when all other explanatory variables are zero.
+
+$u_j$ means andom effects term, capturing the effects introduced by different stores (store j). This means each store has its own specific impact (like location, size, customer base, etc.) that is not shared with other stores.
+
+$\epsilon_i$ means error term.
+
+So in this model,I will use the random value of intercept of store to distinguish the different store.
+
 ```{r echo=FALSE,results='hide'}
-model <- glm(log(Weekly_Sales) ~ Store + Holiday_Flag + Temperature + Fuel_Price + CPI + Unemployment, 
+  
+data$Log_Weekly_Sales <- log(data$Weekly_Sales + 1)
+model <- lmer(Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag+ (1 | Store), data = data)
+
+summary(model)
+
+```
+#### analysis of model3
+
+```{r echo=FALSE,results='hide'}
+r.squared <- r.squaredGLMM(model)
+print(r.squared)
+```
+```{r echo=FALSE}
+plot(resid(model) ~ fitted(model))
+abline(h = 0, col = "red")
+
+qqnorm(resid(model))
+qqline(resid(model), col = "red")
+
+library(broom)
+library(broom.mixed)
+
+# Tidy the model output using broom.mixed
+tidied_model <- tidy(model)
+
+tidied_model <- tidy(model) %>%
+  filter(term %in% c( "Holiday_Flag", "CPI", "Temperature", "Unemployment", "Fuel_Price"))
+
+ggplot(tidied_model, aes(x = estimate, y = reorder(term, estimate))) +
+  geom_point(size = 3, color = "blue") +
+  geom_errorbarh(aes(xmin = estimate - 1.96 * std.error, 
+                     xmax = estimate + 1.96 * std.error), 
+                 height = 0.2, color = "black", size = 1.0) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red", size = 1.2) +
+  labs(x = "Estimated Coefficients", y = "Terms", title = "Coefficient Plot for Selected Predictors") +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.title = element_text(size = 16, face = "bold"),
+    axis.text = element_text(size = 12),
+    plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
+    legend.position = "none"
+  )
+
+```
+
+Model Fit:
+
+The conditional R-squared is extremely high, suggesting that when accounting for both fixed and random effects, the model explains a large proportion of the variance in sales.
+
+The marginal R-squared is quite low, indicating that without the random effects, the fixed effects do not explain much of the variance in sales.
+
+
+Residual Diagnostics:
+
+The residual plot does not show obvious patterns, which suggests that the model does not suffer from non-linearity or heteroscedasticity issues.
+
+The QQ plot indicates deviations from normality, particularly in the tails. This could point to issues with outlier responses or indicate that the normal distribution may not be the best fit for the residuals.
+
+In conclusion, while  appears to be a good fit for capturing store-to-store variation in sales, the fixed effects alone have limited explanatory power.
+
+### model4:generalized linear Model(complete pooling)
+
+$\log(\text{Weekly_Sales}) = \beta_0 + \beta_1 \text{Holiday_Flag} + \beta_2 \text{Temperature} + \beta_3 \text{Fuel_Price} + \beta_4 \text{CPI} + \beta_5 \text{Unemployment}$
+
+```{r echo=FALSE,results='hide'}
+model <- glm(log(Weekly_Sales) ~ Holiday_Flag + Temperature + Fuel_Price + CPI + Unemployment, 
              data = data, 
              family = gaussian())
 summary(model)
 ```
 
+#### analysis of model4
+
+```{r echo=FALSE}
+par(mfrow=c(2,2))
+plot(model)
+```
+```{r echo=FALSE}
+qqnorm(resid(model))
+qqline(resid(model), col="red")
+```
+
+After doing many analysis of this data,we find that it also shows a poor fit with the data,Neither residual plot nor qq plot all shows it would not fit to the data,so I decide not to do the no pooling anymore,I want to try to improve model3 to make it fit better to the data.
+
+### model5:multilevel generalized linear Model with random intercept (No pooling)
+
+
+$\log(\text{Weekly_Sales}) = \beta_0 + \beta_1 \text{Temperature} + \beta_2 \text{Fuel_Price} + \beta_3 \text{CPI} + \beta_4 \text{Unemployment} + \beta_5 \text{Holiday_Flag} + u_j + \epsilon_i$
+
+$\beta_0$ means the intercept term, representing the expected value of the log sales when all other explanatory variables are zero.
+
+$u_j$ means andom effects term, capturing the effects introduced by different stores (store j). This means each store has its own specific impact (like location, size, customer base, etc.) that is not shared with other stores.
+
+$\epsilon_i$ means error term.
+
+```{r warning=FALSE,echo=FALSE,message=FALSE}
+model <- glmer(Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag + (1 | Store), 
+               data = data, family = gaussian(link = "log"))
+summary(model)
+```
+
+
+#### analysis of model5
+
+
+```{r echo=FALSE}
+# Check residuals
+residuals_plot <- plot(resid(model) ~ fitted(model))
+qqnorm(resid(model))
+qqline(resid(model))
+
+
+```
+
+From the qqplot ,we can see  a deviation from the line in the tails, suggesting that the residuals may not be normally distributed, especially in the extremes. This could affect the validity of statistical tests and confidence intervals.From the residual plot,we can see a clear pattern of residuals, which is not ideal. We would prefer a random scatter. The banding pattern could be due to discrete features in the data or overdispersion.So it seems this model may not be a good choice.
+
+
+### model6:multilevel linear Model with random coefficient and random intercept (No pooling)
+
+
+$\log(\text{Weekly_Sales}) = \alpha_{i} + \beta_{1[i]}\text{Temperature} + \beta_{2[i]}\text{Fuel_Price} + \beta_{3[i]}\text{CPI} + \beta_{4[i]}\text{Unemployment} + \beta_{5[i]}\text{Holiday_flag}+\epsilon_i$
+
+in this model,for $\epsilon_i$,it means error term,$\beta_{1[i]}$ to$\beta_{5[i]}$ means random coefficient of variables based on each store and $\alpha_{i}$ means random intercept.
+
+```{r echo=FALSE,warning=FALSE,message=FALSE}
+model <- lmer(Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag + (Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag | Store), data = data)
+
+summary(model)
+```
+
+#### analysis of model6
+
+```{r echo=FALSE}
+
+# Check for normality of residuals
+qqnorm(resid(model))
+qqline(resid(model))
+
+# Check for homoscedasticity
+plot(model)
+```
+
+From this qqplot,we can see  some deviation from normality, especially in the tails. This could affect the reliability of the p-values associated with the fixed effects.From the residual plot, we can see it  shows a fairly random dispersion,besides,we also see the summary of the model,it shows that the intercept and all predictors except for Temperature have significant p-values, suggesting they contribute meaningfully to the model.so based on these outputs, the model appears to be decent.
+
+
+
 # IV.result
 
+I have mentioned in the abstract part,for the result part,what I want to do is to choose from the six model I used to judge which one is the best model,so among these six model,the first three should be exclude are the null model,generalized linear Model,and the simple linear model,because in the analysis part,we can see they all unsatisfactory,so for the last part,what I will do is to make a competition between multilevel linear Model with random coefficient and random intercept, multilevel linear Model with random intercept,multilevel generalized linear Model with random intercept.
+
+## comparison
+
+```{r echo=FALSE,warning=FALSE,message=FALSE}
+model6 <- lmer(Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag + 
+               (Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag | Store), data = data)
+
+model5 <- glmer(Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag + 
+                (1 | Store), data = data, family = gaussian(link = "log"))
+
+model3 <- lmer(Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag + 
+              (1 | Store), data = data)
+
+
+anova(model3, model5, model6)
+```
+model3 is multilevel linear Model with random intercept,model5 is multilevel generalized linear Model with random intercept,model6 is multilevel linear Model with random coefficient and random intercept.
+
+AIC and BIC: model16 has the lowest AIC and BIC values, suggesting that it fits the data best while considering model complexity. AIC and BIC are fit indices that penalize for complexity, with lower values typically indicating a model that fits well with fewer parameters.
+
+Log-Likelihood: model16 has the highest log-likelihood value, which indicates the most accurate fit to the data.
+
+Significance Testing: The p-value for the Chisq statistic is well below 0.001, indicating that model16 represents a statistically significant improvement over the other models.
+
+Combining these insights, model16 appears to be the relatively best model among the three. It not only provides the best fit to the data (based on AIC, BIC, and log-likelihood) but also accounts for model complexity in a penalized manner. Although this model is more complex (as it includes random slopes), its ability to improve the fit seems to outweigh the costs of increased complexity. Therefore, if the data supports a more complex model structure and predictive ability is an important consideration, model16 would be the better choice.
+
 # V.discussion
+
+ For the discussion part,I have mentioned in the abstract part,I will point out some limitation of multilevel linear Model with random coefficient and random intercept(model I choose) and future questions.
+ 
+## limitation
+
+ For the predictor Significance temperature is  insignificance (p > 0.05),which  suggests it may not be an important predictor for `Log_Weekly_Sales` within this model, potentially limiting the model's explanatory power regarding the influence of temperature on sales. For the qqplot part, deviations from normality, particularly in the tails as shown by the Q-Q plot, question the reliability of the model's p-values and confidence intervals, impacting the validity of statistical inferences.Foe r the residual plot,the funnel pattern observed in the residuals versus fitted values plot indicates the presence of heteroscedasticity, which means that the error variance is not constant. This can affect the efficiency of the estimators and the predictive performance of the model.
+ 
+ 
+## future questions
+
+For the future question,I think first we should further investigate the Temperature variable to see if there is a nonlinear relationship or interactions with other variables that are not captured in the current model.
+And we should try to explore more complex random effects structures to better capture the variability in the data, such as including random slopes for certain predictors.
 
 # VI.appendix
 
