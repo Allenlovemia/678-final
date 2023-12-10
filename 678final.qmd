@@ -49,19 +49,19 @@ data$Holiday_Flag <- as.factor(data$Holiday_Flag)
 ```
 
 
-```{r echo=FALSE}
+```{r distribution-plot,echo=FALSE}
 ggplot(data, aes(x =Weekly_Sales)) + 
   geom_histogram(binwidth = 100000, fill = "lightblue", color = "black") +
   labs(title = "Distribution of Weekly Sales", x = " Weekly Sales", y = "Frequency of weekly sales")
 
 ```
-   
+### description
 
  From this plot,we can see that there are fewer weeks with very high sales
  compared to weeks with low sales.This is typical for sales data where a
  small number of periods (like holiday seasons) might have exceptionally high sales.
 
-```{r fig.width=10, fig.height=8, echo=FALSE}
+```{r bin-plot,fig.width=10, fig.height=8, echo=FALSE}
 grouped_data <- data %>%
   group_by(Store) %>%
   summarise(median_sales = median(Weekly_Sales, na.rm = TRUE),
@@ -79,11 +79,12 @@ ggplot(grouped_data, aes(x = as.factor(Store), y = median_sales)) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
 
 ```
+### description
 
 From this plot,we can see there exist obvious differences between each store,some has higher median of weekly sales, and some would have bigger error bar which means sales are more volatile.this suggests that we should trying multilevel model in the model part. 
 
 
-```{r echo=FALSE}
+```{r box-plot,echo=FALSE}
 data %>% 
   ggplot(aes(as_factor(Holiday_Flag), Weekly_Sales)) +
     geom_boxplot() + 
@@ -92,14 +93,11 @@ data %>%
        y = "Weekly Sales") + 
  theme_bw()
 ```
+### description
 
-From this plot,we can see the median of holiday weekly sales is a little bit
-higher than non-holiday weekly sale, and the numbers of outliers in
-non-holiday weekly sales are more than holiday-weekly sales,based on this,I
-think there would have some relationships between holidays and weekly sales.
+From this plot, we can see that  the median of holiday weekly sales is a little bit higher than non-holiday weekly sale, and the numbers of outliers in non-holiday weekly sales are more than holiday-weekly sales,based on this,I think there would have some relationships between holidays and weekly sales.
 
-
-```{r echo=FALSE,warning=FALSE}
+```{r line-plot,echo=FALSE,warning=FALSE}
 date_grouped_data <- data %>%
   group_by(Date) %>%
   summarise(median_sales = median(Weekly_Sales, na.rm = TRUE))
@@ -120,9 +118,11 @@ ggplot(date_grouped_data, aes(x = Date, y = median_sales)) +
 
 ```
 
+### description
+
 From this plot,we can see that there is a recurring trend of lower sales at the beginning of each year. This dip in sales could be attributed to post-holiday season effects, where consumer spending typically drops following the end-of-year holidays,which means the date would have impact on weekly sales.
 
-```{r echo=FALSE,message=FALSE}
+```{r matrix-plot,echo=FALSE,message=FALSE}
 data1 <- data[, !names(data) %in% c("Store","Date")]
 data1 <- data1 %>%
   mutate_if(is.factor, as.character) %>% 
@@ -144,13 +144,15 @@ ggplot(melted_cor_matrix, aes(Var1, Var2, fill = value)) +
   coord_fixed()
 ```
 
+### description
+
 As we can see, from this plot,It is not obvious that these variables are correlated to weekly sales.
 
-## model
+## Model
 
 Because we can not easily draw a conclusion by doing EDA,so the next step for us shoud be modeling,
 
-### Null model
+### model1:null model
 
 ```{r echo=FALSE,results='hide'}
 null_model <- lm(Weekly_Sales ~ 1, data = data)
@@ -161,7 +163,7 @@ mse <- mean(residuals^2)
 print(mse)
 ```
 
-### complete pooling model
+### model2:simple linear model(complete pooling model)
 
 ```{r echo=FALSE,results='hide'}
 predictors <- c('Store', 'Holiday_Flag', 'Temperature', 'Fuel_Price', 'CPI', 'Unemployment')
@@ -182,7 +184,7 @@ predictions <- predict(model, data_test)
 ```
 
 
-### No pooling model
+### model3:multilevel model(No pooling model)
 
 ```{r echo=FALSE,results='hide'}
 models <- data %>%
@@ -193,7 +195,7 @@ model_summaries <- models %>%
   do(tidy(.$model))
 print(model_summaries)
 ```
-### generalized linear Model
+### model4:generalized linear Model
 ```{r echo=FALSE,results='hide'}
 model <- glm(log(Weekly_Sales) ~ Store + Holiday_Flag + Temperature + Fuel_Price + CPI + Unemployment, 
              data = data, 
