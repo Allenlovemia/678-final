@@ -83,6 +83,7 @@
 \setmainfont{Times New Roman}
 \usepackage{setspace}
 \setstretch{1.25}
+\fontsize{9pt}{12pt}\selectfont
 \makeatletter
 \makeatother
 \makeatletter
@@ -143,7 +144,7 @@
 \IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
 \urlstyle{same} % disable monospaced font for URLs
 \hypersetup{
-  pdftitle={678 final},
+  pdftitle={Walmart weekly sales mid-term project},
   pdfauthor={Yingmai Chen},
   colorlinks=true,
   linkcolor={blue},
@@ -152,48 +153,93 @@
   urlcolor={Blue},
   pdfcreator={LaTeX via pandoc}}
 
-\title{678 final}
+\title{Walmart weekly sales mid-term project}
 \author{Yingmai Chen}
 \date{}
 
 \begin{document}
 \maketitle
-\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[frame hidden, borderline west={3pt}{0pt}{shadecolor}, boxrule=0pt, interior hidden, sharp corners, enhanced, breakable]}{\end{tcolorbox}}\fi
+\ifdefined\Shaded\renewenvironment{Shaded}{\begin{tcolorbox}[boxrule=0pt, interior hidden, breakable, borderline west={3pt}{0pt}{shadecolor}, enhanced, sharp corners, frame hidden]}{\end{tcolorbox}}\fi
 
 \hypertarget{i.abstract}{%
-\section{I.abstract}\label{i.abstract}}
+\section{I.Abstract}\label{i.abstract}}
+
+The project aims to find the relationship between weekly sales of
+walmart with other variables,and also want to find which variable is
+more correlated with weekly sales,and the project will include six
+parts:``Abstract'',``Introduction'',``method'',``results'',``discussion'',``appendix''.
+The first two parts are the descriptions of this project,and the method
+part would have two parts:EDA(Exploratory Data Analysis),and model.The
+results would be the comparison and illustration of the model.Discussion
+part would discuss some future questions about my project,appendix would
+include some poorly visualized graphs.
 
 \hypertarget{ii.introduction}{%
-\section{II.introduction}\label{ii.introduction}}
+\section{II.Introduction}\label{ii.introduction}}
+
+In this study, we leveraged a dataset from Kaggle to identify and
+quantify various factors impacting weekly sales. The dataset includes
+key variables such as holidays, oil prices, temperature, unemployment
+rates, and the Consumer Price Index (CPI), we utilized regression
+analysis to assess the relative impact of these variables on sales
+volumes.Through this study, we hope to offer a more comprehensive and
+accurate sales forecasting model, helping businesses better understand
+market dynamics and make more effective business decisions.
 
 \hypertarget{iii.method}{%
-\section{III.method}\label{iii.method}}
+\section{III.Method}\label{iii.method}}
+
+I check the summary of the data first and see there don't have NA's in
+the data,so we don't need to deal with the missing value of data.
 
 \hypertarget{eda}{%
 \subsection{EDA}\label{eda}}
 
 \includegraphics{678final_files/figure-pdf/unnamed-chunk-4-1.pdf}
 
-\begin{verbatim}
-From this plot,we can see that there are fewer weeks with very high sales 
-compared to weeks with low sales.This is typical for sales data where a 
-small number of periods (like holiday seasons) might have exceptionally 
-high sales.
-\end{verbatim}
+From this plot,we can see that there are fewer weeks with very high
+sales compared to weeks with low sales.This is typical for sales data
+where a small number of periods (like holiday seasons) might have
+exceptionally high sales.
 
 \includegraphics{678final_files/figure-pdf/unnamed-chunk-5-1.pdf}
 
+From this plot,we can see there exist obvious differences between each
+store,some has higher median of weekly sales, and some would have bigger
+error bar which means sales are more volatile.this suggests that we
+should trying multilevel model in the model part.
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-6-1.pdf}
+
+From this plot,we can see the median of holiday weekly sales is a little
+bit higher than non-holiday weekly sale, and the numbers of outliers in
+non-holiday weekly sales are more than holiday-weekly sales,based on
+this,I think there would have some relationships between holidays and
+weekly sales.
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-7-1.pdf}
+
+From this plot,we can see that there is a recurring trend of lower sales
+at the beginning of each year. This dip in sales could be attributed to
+post-holiday season effects, where consumer spending typically drops
+following the end-of-year holidays,which means the date would have
+impact on weekly sales.
+
+\hypertarget{model}{%
+\subsection{model}\label{model}}
+
 \hypertarget{null-model}{%
-\subsection{Null model}\label{null-model}}
+\subsubsection{Null model}\label{null-model}}
 
 \hypertarget{complete-pooling-model}{%
-\subsection{complete pooling model}\label{complete-pooling-model}}
+\subsubsection{complete pooling model}\label{complete-pooling-model}}
 
 \hypertarget{no-pooling-model}{%
-\subsection{No pooling model}\label{no-pooling-model}}
+\subsubsection{No pooling model}\label{no-pooling-model}}
 
 \hypertarget{generalized-linear-model}{%
-\subsection{generalized linear Model}\label{generalized-linear-model}}
+\subsubsection{generalized linear
+Model}\label{generalized-linear-model}}
 
 \hypertarget{iv.result}{%
 \section{IV.result}\label{iv.result}}
@@ -203,6 +249,26 @@ high sales.
 
 \hypertarget{vi.appendix}{%
 \section{VI.appendix}\label{vi.appendix}}
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-12-1.pdf}
+
+From this plot, we can hardly see if there exist relationships between
+CPI and weekly sales.
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-13-1.pdf}
+
+From this plot,we can see temperatures from 25 to 75 of the country tend
+to have much more numbers of higher weekly sales.
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-14-1.pdf}
+
+From this plot, we can hardly see if there exist relationships between
+fuel price and weekly sales.
+
+\includegraphics{678final_files/figure-pdf/unnamed-chunk-15-1.pdf}
+
+From this plot,we can see the less of proportions of unemployment tends
+to have higher weekly sales.
 
 
 

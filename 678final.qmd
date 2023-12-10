@@ -1,5 +1,5 @@
 ---
-title: "678 final"
+title: "Walmart weekly sales mid-term project"
 author: "Yingmai Chen"
 format:
   pdf:
@@ -10,6 +10,7 @@ header-includes:
   - "\\setmainfont{Times New Roman}"
   - "\\usepackage{setspace}"
   - "\\setstretch{1.25}"
+  - "\\fontsize{9pt}{12pt}\\selectfont"
 ---
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 library(tidyverse)
@@ -29,35 +30,101 @@ library(corrplot)
 data<-read.csv("walmart.csv")
 ```
 
+
+# I.Abstract
+ The project aims to find the relationship between weekly sales of walmart with other variables,and also want to find which variable is more correlated with weekly sales,and the project will include six parts:"Abstract","Introduction","method","results","discussion","appendix".
+ The first two parts are the descriptions of this project,and the method part would have two parts:EDA(Exploratory Data Analysis),and model.The results would be the comparison and illustration of the model.Discussion part would discuss some future questions about my project,appendix would include some poorly visualized graphs. 
+ 
+# II.Introduction
+In this study, we leveraged a dataset from Kaggle to identify and quantify various factors impacting weekly sales. The dataset includes key variables  such as holidays, oil prices, temperature, unemployment rates, and the Consumer Price Index (CPI), we utilized regression analysis to assess the relative impact of these variables on sales volumes.Through this study, we hope to offer a more comprehensive and accurate sales forecasting model, helping businesses better understand market dynamics and make more effective business decisions.
+
+# III.Method
+
+I check the summary of the data first and see there don't have NA's in the data,so we don't need to deal with the missing value of data.
+
+## EDA
 ```{r echo=FALSE}
 data$Date <- as.Date(data$Date, format="%m-%d-%Y")
 data$Holiday_Flag <- as.factor(data$Holiday_Flag)
 ```
-# I.abstract
 
-# II.introduction
 
-# III.method
-
-## EDA
 ```{r echo=FALSE}
 ggplot(data, aes(x =Weekly_Sales)) + 
   geom_histogram(binwidth = 100000, fill = "lightblue", color = "black") +
   labs(title = "Distribution of Weekly Sales", x = " Weekly Sales", y = "Frequency of weekly sales")
 
 ```
-    From this plot,we can see that there are fewer weeks with very high sales 
-    compared to weeks with low sales.This is typical for sales data where a 
-    small number of periods (like holiday seasons) might have exceptionally 
-    high sales.
+   
+
+ From this plot,we can see that there are fewer weeks with very high sales
+ compared to weeks with low sales.This is typical for sales data where a
+ small number of periods (like holiday seasons) might have exceptionally high sales.
+
+```{r echo=FALSE}
+grouped_data <- data %>%
+  group_by(Store) %>%
+  summarise(median_sales = median(Weekly_Sales, na.rm = TRUE),
+            sd_sales = sd(Weekly_Sales, na.rm = TRUE))
+
+
+ggplot(grouped_data, aes(x = as.factor(Store), y = median_sales)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  geom_errorbar(aes(ymin = median_sales - sd_sales, ymax = median_sales + sd_sales,
+                    color = "Standard Deviation"), width = 0.2, position = position_dodge(0.9)) +
+  scale_color_manual(name = "Legend", values = "red", labels = "Standard Deviation") +
+  labs(title = "Median Weekly Sales by Store ",
+       x = "Store Number", y = "Median Weekly Sales") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+```
+
+From this plot,we can see there exist obvious differences between each store,some has higher median of weekly sales, and some would have bigger error bar which means sales are more volatile.this suggests that we should trying multilevel model in the model part. 
 
 
 ```{r echo=FALSE}
-correlations <- cor(data %>% select(-Store, -Date, -Holiday_Flag)) 
-corrplot(correlations, method = "circle")
+data %>% 
+  ggplot(aes(as_factor(Holiday_Flag), Weekly_Sales)) +
+    geom_boxplot() + 
+  labs(title = "Boxplot of Holiday Flag",
+       x = "Holiday Flag", 
+       y = "Weekly Sales") + 
+ theme_bw()
 ```
 
-## Null model
+From this plot,we can see the median of holiday weekly sales is a little bit
+higher than non-holiday weekly sale, and the numbers of outliers in
+non-holiday weekly sales are more than holiday-weekly sales,based on this,I
+think there would have some relationships between holidays and weekly sales.
+
+
+```{r echo=FALSE,warning=FALSE}
+date_grouped_data <- data %>%
+  group_by(Date) %>%
+  summarise(median_sales = median(Weekly_Sales, na.rm = TRUE))
+
+ggplot(date_grouped_data, aes(x = Date, y = median_sales)) +
+  geom_line(color = "blue", size = 1) +
+  geom_point(color = "darkred", size = 2) +
+  labs(title = "Median Weekly Sales by Date",
+       x = "month of year", y = "Median Weekly Sales") +
+  theme_minimal() +
+  theme(
+    panel.grid.major = element_line(color = "gray", size = 0.5),
+    panel.grid.minor = element_blank(),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    plot.title = element_text(hjust = 0.5)
+  ) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%Y.%m")  # Adjusted date format
+
+```
+
+From this plot,we can see that there is a recurring trend of lower sales at the beginning of each year. This dip in sales could be attributed to post-holiday season effects, where consumer spending typically drops following the end-of-year holidays,which means the date would have impact on weekly sales.
+
+## model
+
+### Null model
 
 ```{r echo=FALSE,results='hide'}
 null_model <- lm(Weekly_Sales ~ 1, data = data)
@@ -68,7 +135,7 @@ mse <- mean(residuals^2)
 print(mse)
 ```
 
-## complete pooling model
+### complete pooling model
 
 ```{r echo=FALSE,results='hide'}
 predictors <- c('Store', 'Holiday_Flag', 'Temperature', 'Fuel_Price', 'CPI', 'Unemployment')
@@ -89,7 +156,7 @@ predictions <- predict(model, data_test)
 ```
 
 
-## No pooling model
+### No pooling model
 
 ```{r echo=FALSE,results='hide'}
 models <- data %>%
@@ -100,7 +167,7 @@ model_summaries <- models %>%
   do(tidy(.$model))
 print(model_summaries)
 ```
-## generalized linear Model
+### generalized linear Model
 ```{r echo=FALSE,results='hide'}
 model <- glm(log(Weekly_Sales) ~ Store + Holiday_Flag + Temperature + Fuel_Price + CPI + Unemployment, 
              data = data, 
@@ -114,6 +181,45 @@ summary(model)
 
 # VI.appendix
 
+```{r echo=FALSE}
+
+ggplot(data, aes(x = CPI, y = Weekly_Sales)) +
+  geom_point() +
+  labs(title = "Scatterplot of CPI vs. Weekly Sales",
+       x = "CPI",
+       y = "Weekly Sales")
+
+```
+
+From this plot, we can hardly see if there exist relationships between CPI and weekly sales. 
+
+```{r echo=FALSE}
+ggplot(data, aes(x = Temperature, y = Weekly_Sales)) +
+  geom_point() +
+  labs(title = "Scatterplot of Temperature vs. Weekly Sales",
+       x = "Temperature",
+       y = "Weekly Sales")
+```
+
+From this plot,we can see temperatures from 25 to 75 of the country tend to have much more numbers of higher weekly sales.
+
+```{r echo=FALSE}
+ggplot(data, aes(x = Fuel_Price, y = Weekly_Sales)) +
+  geom_point() +
+  labs(title = "Scatterplot of Fuel Price vs. Weekly Sales",
+       x = "Fuel Price",
+       y = "Weekly Sales")
+```
 
 
+From this plot, we can hardly see if there exist relationships between fuel price and weekly sales.
 
+```{r echo=FALSE}
+ggplot(data, aes(x = Unemployment, y = Weekly_Sales)) +
+  geom_point() +
+  labs(title = "Scatterplot of Unemployment vs. Weekly Sales",
+       x = "Unemployment",
+       y = "Weekly Sales")
+```
+
+From this plot,we can see the less of proportions of unemployment tends to have higher weekly sales.
