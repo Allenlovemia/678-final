@@ -18,6 +18,7 @@ library(broom)
 library(corrplot)
 library(lme4)
 library(lmerTest)
+library(kableExtra)
 ```
 
 ```{r echo=FALSE}
@@ -174,7 +175,7 @@ Residuals: The residuals' range from -836,979 to 277,1722, with the interquartil
 
 Mean Squared Error (MSE):The provided image shows the Mean Squared Error (MSE) of the null model, which is 318460187634.It illustrated that The null model's high MSE indicates it fails to accurately predict weekly sales, lacking explanatory variables. To improve, incorporating factors like promotions, store attributes, and seasonality into a more complex model is essential.
 
-### model2:simple linear model(complete pooling model)
+### model2:simple linear model
 
 The model equation is given by:
 
@@ -210,7 +211,7 @@ predictions <- predict(model, data_test)
 
 #### analysis of model2
 
-```{r echo=FALSE}
+```{r echo=FALSE, fig.align='center'}
 qqnorm(residuals(model))
 qqline(residuals(model))
 test_residuals <- log(data_test$Weekly_Sales) - predictions
@@ -239,9 +240,9 @@ ggplot(coef_df_no_intercept, aes(x = Term, y = Estimate)) +
   labs(x = 'Predictors', y = 'Coefficients', title = 'Coefficient Plot for Model')
 ```
 
-The model has a very low R-squared value, indicating it does not explain much of the variation in the data.Some predictors are statistically significant, but given the low R-squared, their practical impact might be limited. The assumptions of normality and homoscedasticity may be violated based on the Q-Q plot and the Residuals vs. Predictions plot, which can affect the reliability of the model's standard errors and p-values.There are outliers or extreme values that might be influencing the results significantly.So all in all,simple linear model seems not to be a good model to fit the data.
+The model has a very low R-squared value, indicating it does not explain much of the variation in the data.Some predictors are statistically significant, but given the low R-squared, their practical impact might be limited. The assumptions of normality and homoscedasticity may be violated based on the Q-Q plot and the Residuals vs. Predictions plot, which can affect the reliability of the model's standard errors and p-values.There are outliers or extreme values that might be influencing the results significantly.So all in all,simple linear model seems not to be a good model to fit the data.Besides,we can see that fuel price,holiday flag and unemployment are statistical significant.But temperatures and CPI are not
 
-### model3:multilevel linear model with random intercept (No pooling model)
+### model3:multilevel linear model with random intercept(partial pooling) 
 
 The model equation is given by:
 
@@ -273,7 +274,7 @@ r.squared <- r.squaredGLMM(model)
 print(r.squared)
 ```
 
-```{r echo=FALSE}
+```{r echo=FALSE, fig.align='center'}
 plot(resid(model) ~ fitted(model))
 abline(h = 0, col = "red")
 
@@ -318,9 +319,11 @@ The residual plot does not show obvious patterns, which suggests that the model 
 
 The QQ plot indicates deviations from normality, particularly in the tails. This could point to issues with outlier responses or indicate that the normal distribution may not be the best fit for the residuals.
 
+From coefficient plot,we can see except for CPI and temperature,other variables are statistical significant.
+
 In conclusion, while appears to be a good fit for capturing store-to-store variation in sales, the fixed effects alone have limited explanatory power.
 
-### model4:generalized linear Model(complete pooling)
+### model4:generalized linear Model
 
 The model equation is given by:
 
@@ -344,19 +347,14 @@ summary(model)
 
 #### analysis of model4
 
-```{r echo=FALSE}
+```{r echo=FALSE, fig.align='center'}
 par(mfrow=c(2,2))
 plot(model)
 ```
 
-```{r echo=FALSE}
-qqnorm(resid(model))
-qqline(resid(model), col="red")
-```
+After doing many analysis of this data,we find that it also shows a poor fit with the data,Neither residual plot nor qq plot all shows it would not fit to the data,so I decide not to do the no pooling anymore,I want to try to improve model3 to make it fit better to the data.Besides,for the summary of the model,we can see temperature,CPI and unemployment are statistical significant,it is different with other models.
 
-After doing many analysis of this data,we find that it also shows a poor fit with the data,Neither residual plot nor qq plot all shows it would not fit to the data,so I decide not to do the no pooling anymore,I want to try to improve model3 to make it fit better to the data.
-
-### model5:multilevel generalized linear Model with random intercept (No pooling)
+### model5:multilevel generalized linear Model with random intercept(partial pooling) 
 
 The model equation is given by:
 
@@ -376,7 +374,7 @@ summary(model)
 
 #### analysis of model5
 
-```{r echo=FALSE}
+```{r echo=FALSE, fig.align='center'}
 # Check residuals
 residuals_plot <- plot(resid(model) ~ fitted(model))
 qqnorm(resid(model))
@@ -385,9 +383,9 @@ qqline(resid(model))
 
 ```
 
-From the qqplot ,we can see a deviation from the line in the tails, suggesting that the residuals may not be normally distributed, especially in the extremes. This could affect the validity of statistical tests and confidence intervals.From the residual plot,we can see a clear pattern of residuals, which is not ideal. We would prefer a random scatter. The banding pattern could be due to discrete features in the data or overdispersion.So it seems this model may not be a good choice.
+From the qqplot ,we can see a deviation from the line in the tails, suggesting that the residuals may not be normally distributed, especially in the extremes. This could affect the validity of statistical tests and confidence intervals.From the residual plot,we can see a clear pattern of residuals, which is not ideal. We would prefer a random scatter. The banding pattern could be due to discrete features in the data or overdispersion.Besides,from summary of model,we can see except for CPI and temperature,other variables are statistical significant.So it seems this model may not be a good choice.
 
-### model6:multilevel linear Model with random coefficient and random intercept (No pooling)
+### model6:multilevel linear Model with random coefficient and random intercept (partial pooling)
 
 The model equation is given by:
 
@@ -411,7 +409,7 @@ summary(model)
 
 #### analysis of model6
 
-```{r echo=FALSE}
+```{r echo=FALSE, fig.align='center'}
 
 # Check for normality of residuals
 qqnorm(resid(model))
@@ -440,7 +438,11 @@ model3 <- lmer(Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment 
               (1 | Store), data = data)
 
 
-anova(model3, model5, model6)
+anova_result<-anova(model3, model5, model6)
+```
+
+```{r echo=FALSE}
+kable(as.data.frame(anova_result))
 ```
 
 model3 is multilevel linear Model with random intercept,model5 is multilevel generalized linear Model with random intercept,model6 is multilevel linear Model with random coefficient and random intercept.
