@@ -19,6 +19,8 @@ library(corrplot)
 library(lme4)
 library(lmerTest)
 library(kableExtra)
+library(lmtest)
+library(knitr)
 ```
 
 ```{r echo=FALSE}
@@ -423,11 +425,10 @@ From this qqplot,we can see some deviation from normality, especially in the tai
 
 # IV.result
 
-I have mentioned in the abstract part,for the result part,what I want to do is to choose from the six model I used to judge which one is the best model,so among these six model,the first three should be exclude are the null model,generalized linear Model,and the simple linear model,because in the analysis part,we can see they all unsatisfactory,so for the last part,what I will do is to make a competition between multilevel linear Model with random coefficient and random intercept, multilevel linear Model with random intercept,multilevel generalized linear Model with random intercept.
+I have mentioned in the abstract part,for the result part,what I want to do is to choose from the six model I used to judge which one is the best model,So what I do are as follows:
 
 ## comparison
-
-```{r echo=FALSE,warning=FALSE,message=FALSE}
+```{r echo=FALSE,results='hide',message=FALSE,warning=FALSE}
 model6 <- lmer(Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag + 
                (Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag | Store), data = data)
 
@@ -436,24 +437,64 @@ model5 <- glmer(Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment
 
 model3 <- lmer(Log_Weekly_Sales ~ Temperature + Fuel_Price + CPI + Unemployment + Holiday_Flag + 
               (1 | Store), data = data)
+model1<-lm(log(Weekly_Sales) ~ 1, data = data)
+model2<-lm(log(Weekly_Sales) ~  Holiday_Flag + Temperature + Fuel_Price + CPI + Unemployment, data=data)
+model4<-glm(log(Weekly_Sales) ~ Holiday_Flag + Temperature + Fuel_Price + CPI + Unemployment, 
+             data = data, 
+             family = gaussian())
+```
 
+### Mean square error
 
-anova_result<-anova(model3, model5, model6)
+First,I exclude model5,it seems that the mse of model5 is much bigger than others.
+```{r echo=FALSE}
+calculate_MSE <- function(model, data, is_lmm = FALSE) {
+  if (is_lmm) {
+    predictions <- predict(model, re.form = NULL)
+  } else {
+    predictions <- predict(model, newdata = data)
+  }
+  mse <- mean((data$Log_Weekly_Sales - predictions)^2)
+  return(mse)
+}
+mse_model1 <- calculate_MSE(model1, data)
+mse_model2 <- calculate_MSE(model2, data)
+mse_model3 <- calculate_MSE(model3, data)
+mse_model4 <- calculate_MSE(model4, data)
+mse_model5 <- calculate_MSE(model5, data)
+mse_model6 <- calculate_MSE(model6, data)
+results <- data.frame(
+  Model = c("Model 1", "Model 2", "Model 3", "Model 4", "Model 6"),
+  MSE = c(mse_model1, mse_model2, mse_model3, mse_model4, mse_model6)
+)
+
+# Use kable to create a formatted table
+kable(results, caption = "MSE of Various Models")
+```
+
+From mean square error part,we can see clearly that model3 and model6 are better,in mse part,it seems model6 is better than model3,but to be honest,model6 is more complex than model3,so to compare those two models,I also use anova test to compare those two models.
+
+### AIC and BIC
+```{r echo=FALSE,warning=FALSE,message=FALSE}
+anova_result<-anova(model3, model6)
 ```
 
 ```{r echo=FALSE}
 kable(as.data.frame(anova_result))
 ```
 
-model3 is multilevel linear Model with random intercept,model5 is multilevel generalized linear Model with random intercept,model6 is multilevel linear Model with random coefficient and random intercept.
+model3 is multilevel linear Model with random intercept,model6 is multilevel linear Model with random coefficient and random intercept.
 
-AIC and BIC: model16 has the lowest AIC and BIC values, suggesting that it fits the data best while considering model complexity. AIC and BIC are fit indices that penalize for complexity, with lower values typically indicating a model that fits well with fewer parameters.
+AIC and BIC: model6 has the lowest AIC and BIC values, suggesting that it fits the data best while considering model complexity. AIC and BIC are fit indices that penalize for complexity, with lower values typically indicating a model that fits well with fewer parameters.
 
-Log-Likelihood: model16 has the highest log-likelihood value, which indicates the most accurate fit to the data.
+Log-Likelihood: model6 has the highest log-likelihood value, which indicates the most accurate fit to the data.
 
-Significance Testing: The p-value for the Chisq statistic is well below 0.001, indicating that model16 represents a statistically significant improvement over the other models.
+Significance Testing: The p-value for the Chisq statistic is well below 0.001, indicating that model6 represents a statistically significant improvement over the other models.
 
-Combining these insights, model16 appears to be the relatively best model among the three. It not only provides the best fit to the data (based on AIC, BIC, and log-likelihood) but also accounts for model complexity in a penalized manner. Although this model is more complex (as it includes random slopes), its ability to improve the fit seems to outweigh the costs of increased complexity. Therefore, if the data supports a more complex model structure and predictive ability is an important consideration, model16 would be the better choice.
+Combining these insights, model6 appears to be better than model3. It not only provides the best fit to the data (based on AIC, BIC, and log-likelihood) but also accounts for model complexity in a penalized manner. Although this model is more complex (as it includes random slopes), its ability to improve the fit seems to outweigh the costs of increased complexity. Therefore, if the data supports a more complex model structure and predictive ability is an important consideration, model16 would be the better choice.
+
+
+
 
 # V.discussion
 
